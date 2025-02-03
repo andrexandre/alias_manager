@@ -1,54 +1,88 @@
 #!/bin/bash
 
+script_shell_used=$(ps -cp "$$" -o command="")
+script_filename=$(basename $0)
+terminal_shell_used=$(ps -cp "$PPID" -o command="")
+# if the shell that the script is using is not the same as the one
+# terminal is using, run the script with the terminal's shell
+[ "$script_shell_used" != "$terminal_shell_used" ] && exec "$terminal_shell_used" "$0" "$@"
+
+shrc=$HOME/."$terminal_shell_used"rc
+. $shrc
+
 cmd_detection() {
-	[ -z "$1" ] && echo Usage: ./am COMMAND && return
-	result_text=$(type "$1" 2>&1)
-	# echo $result_text
-	# return
+	result_text=$(type "$2" 2>&1)
 	case $result_text in
-		*"not found"*)
-			echo "Command not found"
-			;;
-		*"builtin"*)
-			echo "Command is builtin"
-			;;
 		*"an alias for"*)
-			echo "Command is an alias"
+			echo "alias"
 			;;
 		*"shell function"*)
-			echo "Command is shell function"
+			echo "function"
 			;;
-		*"/"*)
-			echo "Command is a command"
+		*"not found"*|*"builtin"*|*"/"*)
+			type "$2" >&2
+			exit 1
 			;;
 		*)
-			echo "What is that command"
+			echo "What is that" >&2
+			exit 1
 			;;
 	esac
 }
-cmd_detection "$@"
-# create/read/update/delete
-# add/ls/edit/rm
-# create(){
+
+# create_alias(){
 # if exists ...
 # echo ... >> .zshrc
 # }
 
-# read(){
-# if exists
-# echo it
-# else doesen't exist
-# }
+read_alias(){
+	if [ -z "$2" ]; then
+		alias
+		declare -f
+		return
+	fi
+	# implement search with -f and search with command not found
+	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "alias" ]; then
+		command -v "$2"
+	elif [ "$result_type" = "function" ]; then
+		which "$2"
+	fi
+}
 
-# update(){
+# update_alias(){
 # if exists
 # sed ...
 # else echo doesn't exist
 # }
 
-# delete(){
+# delete_alias(){
 # if alias grep alias
 # else if func grep func
 # else doesn't exist
 # rm alias or func
 # }
+
+main() {
+	[ -z "$1" ] && echo Usage: ./am add/ls/edit/rm && return
+	case "$1" in
+		add)
+			create_alias "$@"
+			;;
+		ls)
+			read_alias "$@"
+			;;
+		edit)
+			update_alias "$@"
+			;;
+		rm)
+			delete_alias "$@"
+			;;
+		*)
+			echo "Invalid command"
+			echo
+			echo Usage: ./am add/ls/edit/rm
+			;;
+	esac
+}
+main "$@"
