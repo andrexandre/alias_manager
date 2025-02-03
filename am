@@ -1,0 +1,26 @@
+exit
+create/read/update/delete
+# add/ls/edit/rm
+create(){
+if exists ...
+echo ... >> .zshrc
+}
+
+read(){
+if exists
+echo it
+else doesen't exist
+}
+
+update(){
+if exists
+sed ...
+else echo doesn't exist
+}
+
+delete(){
+if alias grep alias
+else if func grep func
+else doesn't exist
+rm alias or func
+}
