@@ -1,4 +1,23 @@
 exit
+
+cmd_detection() {
+# command -v "cmd", alias "cmd" and which "cmd"
+var='which cmd'
+if grep -q 'not found'
+cmd not found
+else if grep 'built-in'
+cmd is a built in
+else if grep 'aliased to'
+cmd is an alias
+var='command -v cmd'
+if $var = cmd
+cmd is a function
+else if grep /
+cmd is a command
+else
+what is cmd?
+}
+
 create/read/update/delete
 # add/ls/edit/rm
 create(){
