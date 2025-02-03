@@ -1,21 +1,24 @@
 #!/bin/bash
 
 cmd_detection() {
-	result_text="type $1"
+	[ -z "$1" ] && echo Usage: ./am COMMAND && return
+	result_text=$(type "$1" 2>&1)
+	# echo $result_text
+	# return
 	case $result_text in
-		*not found*)
+		*"not found"*)
 			echo "Command not found"
 			;;
-		*builtin*)
+		*"builtin"*)
 			echo "Command is builtin"
 			;;
-		*an alias for*)
+		*"an alias for"*)
 			echo "Command is an alias"
 			;;
-		*shell function*)
+		*"shell function"*)
 			echo "Command is shell function"
 			;;
-		*/*)
+		*"/"*)
 			echo "Command is a command"
 			;;
 		*)
@@ -23,8 +26,7 @@ cmd_detection() {
 			;;
 	esac
 }
-exit
-
+cmd_detection "$@"
 # create/read/update/delete
 # add/ls/edit/rm
 # create(){
