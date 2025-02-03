@@ -1,45 +1,52 @@
-exit
+#!/bin/bash
 
 cmd_detection() {
-# command -v "cmd", alias "cmd" and which "cmd"
-var='which cmd'
-if grep -q 'not found'
-cmd not found
-else if grep 'built-in'
-cmd is a built in
-else if grep 'aliased to'
-cmd is an alias
-var='command -v cmd'
-if $var = cmd
-cmd is a function
-else if grep /
-cmd is a command
-else
-what is cmd?
+	result_text="type $1"
+	case $result_text in
+		*not found*)
+			echo "Command not found"
+			;;
+		*builtin*)
+			echo "Command is builtin"
+			;;
+		*an alias for*)
+			echo "Command is an alias"
+			;;
+		*shell function*)
+			echo "Command is shell function"
+			;;
+		*/*)
+			echo "Command is a command"
+			;;
+		*)
+			echo "What is that command"
+			;;
+	esac
 }
+exit
 
-create/read/update/delete
+# create/read/update/delete
 # add/ls/edit/rm
-create(){
-if exists ...
-echo ... >> .zshrc
-}
+# create(){
+# if exists ...
+# echo ... >> .zshrc
+# }
 
-read(){
-if exists
-echo it
-else doesen't exist
-}
+# read(){
+# if exists
+# echo it
+# else doesen't exist
+# }
 
-update(){
-if exists
-sed ...
-else echo doesn't exist
-}
+# update(){
+# if exists
+# sed ...
+# else echo doesn't exist
+# }
 
-delete(){
-if alias grep alias
-else if func grep func
-else doesn't exist
-rm alias or func
-}
+# delete(){
+# if alias grep alias
+# else if func grep func
+# else doesn't exist
+# rm alias or func
+# }
