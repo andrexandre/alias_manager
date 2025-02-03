@@ -13,13 +13,16 @@ shrc=$HOME/."$terminal_shell_used"rc
 cmd_detection() {
 	result_text=$(type "$2" 2>&1)
 	case $result_text in
+		*"not found"*)
+			echo "not found"
+			;;
 		*"an alias for"*)
 			echo "alias"
 			;;
 		*"shell function"*)
 			echo "function"
 			;;
-		*"not found"*|*"builtin"*|*"/"*)
+		*"builtin"*|*"/"*)
 			type "$2" >&2
 			exit 1
 			;;
@@ -30,19 +33,43 @@ cmd_detection() {
 	esac
 }
 
-# create_alias(){
-# if exists ...
-# echo ... >> .zshrc
-# }
+create_alias(){
+	if [ -z "$2" ] || [ -z "$3" ]; then
+		echo creation of function not yet implemented
+		echo Usage: ./am add ALIAS_NAME ALIAS_COMMAND
+		return # gum write >> $shrc
+	fi
+	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "alias" ]; then
+		echo alias already exists:
+		command -v "$2"
+	elif [ "$result_type" = "function" ]; then
+		echo function already exists:
+		which "$2"
+	elif [ "$result_type" = "not found" ]; then
+		echo "alias $2='$3'" >> $shrc
+		. $shrc
+	fi
+}
 
 read_alias(){
 	if [ -z "$2" ]; then
+		alias | grep --color=no -Ff - $shrc
+		# needs implementation
+		# declare -f | grep --color=no -Ff - $shrc
+		return
+	fi
+	if [ "$2" = "-a" ]; then
 		alias
 		declare -f
 		return
 	fi
-	# implement search with -f and search with command not found
+	# implement search with -f
 	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "not found" ]; then
+		alias | grep "$2" || declare -f | grep "$2" || echo "alias not found"
+		return
+	fi
 	if [ "$result_type" = "alias" ]; then
 		command -v "$2"
 	elif [ "$result_type" = "function" ]; then
@@ -50,18 +77,42 @@ read_alias(){
 	fi
 }
 
-# update_alias(){
-# if exists
-# sed ...
-# else echo doesn't exist
-# }
+update_alias(){
+	if [ -z "$2" ] || [ -z "$3" ]; then
+		echo Usage: ./am edit ALIAS_NAME ALIAS_COMMAND
+		return
+	fi
+	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "not found" ]; then
+		echo "alias not found"
+		return
+	fi
+	if [ "$result_type" = "alias" ]; then
+		sed -i "/alias $2=/c\alias $2='$3'" $shrc
+		. $shrc
+	elif [ "$result_type" = "function" ]; then
+		echo not yet implemented
+		sed -n "/^$2() {/,/^}/p" $shrc # | gum write
+	fi
+}
 
-# delete_alias(){
-# if alias grep alias
-# else if func grep func
-# else doesn't exist
-# rm alias or func
-# }
+delete_alias(){
+	if [ -z "$2" ]; then
+		echo Usage: ./am rm ALIAS_NAME
+		return
+	fi
+	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "not found" ]; then
+		echo "alias not found"
+		return
+	fi
+	if [ "$result_type" = "alias" ]; then
+		sed -i "/alias $2=/d" $shrc
+	elif [ "$result_type" = "function" ]; then
+		sed -i "/^$2() {/,/^}/d" $shrc
+	fi
+	. $shrc
+}
 
 main() {
 	[ -z "$1" ] && echo Usage: ./am add/ls/edit/rm && return
