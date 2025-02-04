@@ -4,14 +4,14 @@ This script allows you to do all CRUD (create, read, update, and delete) operati
 ## Setup
 
 ```bash
-wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/main/am
+wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/main/am ; ./am setup
 ```
 
 ## Usage
-- `./am add ALIAS_NAME ALIAS_COMMAND` - create alias
-- `./am ls [ALIAS_NAME]` - list alias
-- `./am edit ALIAS_NAME ALIAS_COMMAND` - edit alias
-- `./am rm ALIAS_NAME` - remove alias
+- `am add ALIAS_NAME ALIAS_COMMAND` - create alias
+- `am ls [ALIAS_NAME]` - list alias
+- `am edit [ALIAS_NAME] [ALIAS_COMMAND]` - edit alias
+- `am rm ALIAS_NAME` - remove alias
 
 ## To-Do
 - Needs custom importation from cloud

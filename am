@@ -81,8 +81,13 @@ read_alias(){
 }
 
 update_alias(){
-	if [ -z "$2" ] || [ -z "$3" ]; then
+	if [ -z "$3" ]; then
 		echo Usage: ./am edit ALIAS_NAME ALIAS_COMMAND
+		return
+	fi
+	if [ -z "$2" ]; then
+		nano $shrc
+		. $shrc
 		return
 	fi
 	result_type=$(cmd_detection "$@")
@@ -134,7 +139,8 @@ main() {
 			;;
 		setup)
 			if [ -f $HOME/.local/bin/am ]; then
-				echo there is already a file named am in ~/.local/bin
+				read -p "Do you want to remove alias manager? (y/N): " choice
+				[[ "$choice" = [Yy]* ]] && rm $HOME/.local/bin/am
 			else
 				cp am $HOME/.local/bin
 				echo you can now use am to run the alias manager
