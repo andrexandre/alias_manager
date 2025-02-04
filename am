@@ -1,0 +1,156 @@
+#!/bin/bash
+
+script_shell_used=$(ps -cp "$$" -o command="")
+script_filename=$(basename $0)
+terminal_shell_used=$(ps -cp "$PPID" -o command="")
+# if the shell that the script is using is not the same as the one
+# terminal is using, run the script with the terminal's shell
+[ "$script_shell_used" != "$terminal_shell_used" ] && exec "$terminal_shell_used" "$0" "$@"
+
+shrc=$HOME/."$terminal_shell_used"rc
+if ! grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shrc; then
+	echo '# include ~/.local/bin in PATH' >> $shrc
+	echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shrc
+fi
+. $shrc
+
+cmd_detection() {
+	result_text=$(type "$2" 2>&1)
+	case $result_text in
+		*"not found"*)
+			echo "not found"
+			;;
+		*"an alias for"*)
+			echo "alias"
+			;;
+		*"shell function"*)
+			echo "function"
+			;;
+		*"builtin"*|*"/"*)
+			type "$2" >&2
+			exit 1
+			;;
+		*)
+			echo "What is that" >&2
+			exit 1
+			;;
+	esac
+}
+
+create_alias(){
+	if [ -z "$2" ] || [ -z "$3" ]; then
+		echo creation of function not yet implemented
+		echo Usage: ./am add ALIAS_NAME ALIAS_COMMAND
+		return # gum write >> $shrc
+	fi
+	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "alias" ]; then
+		echo alias already exists:
+		command -v "$2"
+	elif [ "$result_type" = "function" ]; then
+		echo function already exists:
+		which "$2"
+	elif [ "$result_type" = "not found" ]; then
+		echo "alias $2='$3'" >> $shrc
+		. $shrc
+	fi
+}
+
+read_alias(){
+	if [ -z "$2" ]; then
+		# am ls only lists alias
+		alias | grep --color=no -Ff - $shrc
+		return
+	fi
+	if [ "$2" = "-a" ]; then
+		alias
+		declare -f
+		return
+	fi
+	# implement search with -f
+	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "not found" ]; then
+		alias | grep "$2" || declare -f | grep "$2" || echo "alias not found"
+		return
+	fi
+	if [ "$result_type" = "alias" ]; then
+		command -v "$2"
+	elif [ "$result_type" = "function" ]; then
+		which "$2"
+	fi
+}
+
+update_alias(){
+	if [ -z "$3" ]; then
+		echo Usage: ./am edit ALIAS_NAME ALIAS_COMMAND
+		return
+	fi
+	if [ -z "$2" ]; then
+		nano $shrc
+		. $shrc
+		return
+	fi
+	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "not found" ]; then
+		echo "alias not found"
+		return
+	fi
+	if [ "$result_type" = "alias" ]; then
+		sed -i "/alias $2=/c\alias $2='$3'" $shrc
+		. $shrc
+	elif [ "$result_type" = "function" ]; then
+		echo not yet implemented
+		sed -n "/^$2() {/,/^}/p" $shrc # | gum write
+	fi
+}
+
+delete_alias(){
+	if [ -z "$2" ]; then
+		echo Usage: ./am rm ALIAS_NAME
+		return
+	fi
+	result_type=$(cmd_detection "$@")
+	if [ "$result_type" = "not found" ]; then
+		echo "alias not found"
+		return
+	fi
+	if [ "$result_type" = "alias" ]; then
+		sed -i "/alias $2=/d" $shrc
+	elif [ "$result_type" = "function" ]; then
+		sed -i "/^$2() {/,/^}/d" $shrc
+	fi
+	. $shrc
+}
+
+main() {
+	[ -z "$1" ] && echo Usage: ./am add/ls/edit/rm && return
+	case "$1" in
+		add)
+			create_alias "$@"
+			;;
+		ls)
+			read_alias "$@"
+			;;
+		edit)
+			update_alias "$@"
+			;;
+		rm)
+			delete_alias "$@"
+			;;
+		setup)
+			if [ -f $HOME/.local/bin/am ]; then
+				read -p "Do you want to remove alias manager? (y/N): " choice
+				[[ "$choice" = [Yy]* ]] && rm $HOME/.local/bin/am
+			else
+				cp am $HOME/.local/bin
+				echo you can now use am to run the alias manager
+			fi
+			;;
+		*)
+			echo "Invalid command"
+			echo
+			echo Usage: ./am add/ls/edit/rm
+			;;
+	esac
+}
+main "$@"
