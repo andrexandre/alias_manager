@@ -140,11 +140,16 @@ main() {
 		setup)
 			if [ -f $HOME/.local/bin/am ]; then
 				read -p "Do you want to remove alias manager? (y/N): " choice
-				[[ "$choice" = [Yy]* ]] && rm $HOME/.local/bin/am
+				if [[ "$choice" = [Yy]* ]]; then
+					rm $HOME/.local/bin/am
+					echo "Alias manager removed successfully!"
+					echo "To set up alias manager again run:"
+					echo "wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/main/am ; bash am setup"
+				fi
 			else
 				chmod +x am
 				cp am $HOME/.local/bin
-				echo you can now use am to run the alias manager
+				echo Alias manager setup successfully!
 			fi
 			;;
 		*)
