@@ -14,4 +14,5 @@ wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/m
 - `am rm ALIAS_NAME` - remove alias
 
 ## To-Do
+- Bug fix on removal of am using setup
 - Needs custom importation from cloud
