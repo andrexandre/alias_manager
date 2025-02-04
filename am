@@ -142,6 +142,7 @@ main() {
 				read -p "Do you want to remove alias manager? (y/N): " choice
 				[[ "$choice" = [Yy]* ]] && rm $HOME/.local/bin/am
 			else
+				chmod +x am
 				cp am $HOME/.local/bin
 				echo you can now use am to run the alias manager
 			fi
