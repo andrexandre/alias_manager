@@ -1,5 +1,5 @@
 # Alias manager
-This is an alias manager that allows to do all CRUD (create, read, update, and delete) operations
+This script allows you to do all CRUD (create, read, update, and delete) operations on shell alias or functions on your `.shellrc` file
 
 ## Setup
 
