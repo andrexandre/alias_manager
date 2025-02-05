@@ -8,11 +8,35 @@ terminal_shell_used=$(ps -cp "$PPID" -o command="")
 [ "$script_shell_used" != "$terminal_shell_used" ] && exec "$terminal_shell_used" "$0" "$@"
 
 shrc=$HOME/."$terminal_shell_used"rc
-if ! grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shrc; then
+[ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
+if ! echo "$PATH" | grep -q "$HOME/.local/bin" || \
+	! grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shrc; then
 	echo '# include ~/.local/bin in PATH' >> $shrc
 	echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shrc
 fi
 . $shrc
+
+blue=27
+yellow=220
+primary=$yellow
+secondary=$blue
+update_styling_variables() {
+	export FOREGROUND=$primary
+	export BORDER_FOREGROUND=$secondary
+	export GUM_CHOOSE_HEADER_FOREGROUND=$primary
+	export GUM_CHOOSE_SELECTED_FOREGROUND=$secondary
+	export GUM_CHOOSE_CURSOR_FOREGROUND=$secondary
+	export GUM_CONFIRM_PROMPT_FOREGROUND=$primary
+	export GUM_CONFIRM_SELECTED_BACKGROUND=$secondary
+	export GUM_INPUT_PROMPT_FOREGROUND=$primary
+	export GUM_INPUT_CURSOR_FOREGROUND=$secondary
+	export GUM_PAGER_BORDER_FOREGROUND=$secondary
+	export GUM_PAGER_MATCH_FOREGROUND=$primary
+	export GUM_PAGER_MATCH_HIGH_BACKGROUND=$primary
+	export GUM_FILTER_INDICATOR_FOREGROUND=$secondary
+	export GUM_FILTER_MATCH_FOREGROUND=$primary
+}
+update_styling_variables
 
 cmd_detection() {
 	result_text=$(type "$2" 2>&1)
@@ -38,10 +62,9 @@ cmd_detection() {
 }
 
 create_alias(){
-	if [ -z "$2" ] || [ -z "$3" ]; then
-		echo creation of function not yet implemented
-		echo Usage: ./am add ALIAS_NAME ALIAS_COMMAND
-		return # gum write >> $shrc
+	if [ -z "$2" ]; then
+		echo "Usage: am add NAME [COMMAND]"
+		return
 	fi
 	result_type=$(cmd_detection "$@")
 	if [ "$result_type" = "alias" ]; then
@@ -51,14 +74,20 @@ create_alias(){
 		echo function already exists:
 		which "$2"
 	elif [ "$result_type" = "not found" ]; then
-		echo "alias $2='$3'" >> $shrc
+		if [ -z "$3" ]; then
+			alias_command=$(gum input --placeholder "Alias '$2' will execute...")
+			[ -z "$alias_command" ] && return
+			echo "alias $2='$alias_command'" >> $shrc
+		else
+			echo "alias $2='$3'" >> $shrc
+		fi
 		. $shrc
 	fi
 }
 
 read_alias(){
 	if [ -z "$2" ]; then
-		# am ls only lists alias
+		# `am ls` only lists alias
 		alias | grep --color=no -Ff - $shrc
 		return
 	fi
@@ -67,11 +96,14 @@ read_alias(){
 		declare -f
 		return
 	fi
-	# implement search with -f
+	if [ "$2" = "-f" ]; then
+		alias | gum filter
+		return
+	fi
 	result_type=$(cmd_detection "$@")
 	if [ "$result_type" = "not found" ]; then
 		alias | grep "$2" || declare -f | grep "$2" || echo "alias not found"
-		return
+		return 1
 	fi
 	if [ "$result_type" = "alias" ]; then
 		command -v "$2"
@@ -81,10 +113,6 @@ read_alias(){
 }
 
 update_alias(){
-	if [ -z "$3" ]; then
-		echo Usage: ./am edit ALIAS_NAME ALIAS_COMMAND
-		return
-	fi
 	if [ -z "$2" ]; then
 		nano $shrc
 		. $shrc
@@ -92,27 +120,40 @@ update_alias(){
 	fi
 	result_type=$(cmd_detection "$@")
 	if [ "$result_type" = "not found" ]; then
-		echo "alias not found"
-		return
+		echo "alias '$2' not found"
+		return 1
 	fi
 	if [ "$result_type" = "alias" ]; then
-		sed -i "/alias $2=/c\alias $2='$3'" $shrc
+		if [ -z "$3" ]; then
+			alias_old_command=$(grep -oP "alias $2='[^']*'" $shrc | sed "s/alias $2='//; s/'$//")
+			alias_command=$(echo $alias_old_command | gum input --placeholder "$alias_old_command")
+			[ -z "$alias_command" ] && return
+			sed -i "/alias $2=/c\alias $2='$alias_command'" $shrc
+		else
+			sed -i "/alias $2=/c\alias $2='$3'" $shrc
+		fi
 		. $shrc
 	elif [ "$result_type" = "function" ]; then
-		echo not yet implemented
-		sed -n "/^$2() {/,/^}/p" $shrc # | gum write
+		echo "Use 'am edit' to edit functions"
+		# if [ "$3" ]; then
+		# 	echo Usage: ./am edit FUNCTION_NAME ; return
+		# fi
+		# alias_replaced=$(sed -n "/^$2 () {/,/^}/p" $shrc)
+		# alias_replacement=$(echo $alias_replaced | gum write)
+		# [ -z "$alias_replacement" ] && return
+		# sed -i "s/$alias_replaced/$alias_replacement/g" $shrc
 	fi
 }
 
 delete_alias(){
 	if [ -z "$2" ]; then
-		echo Usage: ./am rm ALIAS_NAME
+		echo Usage: am rm NAME
 		return
 	fi
 	result_type=$(cmd_detection "$@")
 	if [ "$result_type" = "not found" ]; then
-		echo "alias not found"
-		return
+		echo "alias '$2' not found"
+		return 1
 	fi
 	if [ "$result_type" = "alias" ]; then
 		sed -i "/alias $2=/d" $shrc
@@ -122,41 +163,59 @@ delete_alias(){
 	. $shrc
 }
 
-main() {
-	[ -z "$1" ] && echo Usage: ./am add/ls/edit/rm && return
-	case "$1" in
-		add)
-			create_alias "$@"
-			;;
-		ls)
-			read_alias "$@"
-			;;
-		edit)
-			update_alias "$@"
-			;;
-		rm)
-			delete_alias "$@"
-			;;
-		setup)
-			if [ -f $HOME/.local/bin/am ]; then
-				read -p "Do you want to remove alias manager? (y/N): " choice
-				if [[ "$choice" = [Yy]* ]]; then
-					rm $HOME/.local/bin/am
-					echo "Alias manager removed successfully!"
-					echo "To set up alias manager again run:"
-					echo "wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/main/am ; bash am setup"
-				fi
-			else
-				chmod +x am
-				cp am $HOME/.local/bin
-				echo Alias manager setup successfully!
-			fi
-			;;
-		*)
-			echo "Invalid command"
-			echo
-			echo Usage: ./am add/ls/edit/rm
-			;;
-	esac
+setup_am() {
+	if [ -f $HOME/.local/bin/am ]; then
+		gum confirm "Do you want to remove alias manager?" || return
+		rm $HOME/.local/bin/am
+		echo "Alias manager removed successfully!"
+		echo "To set up alias manager again run:"
+		echo "wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/main/am ; bash am setup"
+	else
+		chmod +x am
+		cp am $HOME/.local/bin
+		echo Alias manager setup successfully!
+	fi
 }
-main "$@"
+
+display_help() {
+		echo "Usage: am COMMAND
+
+Alias and functions manager
+
+Commands:
+ add NAME [COMMAND]    Create alias
+ ls [NAME/OPTION]      List alias
+ edit [NAME] [COMMAND] Edit alias
+ rm NAME               Remove alias"
+}
+
+# main
+if ! command -v gum &> /dev/null; then
+	if ! timeout 3 ping -c 1 google.com &> /dev/null; then
+		echo "Bad internet connection" ; exit 1
+	fi
+	export list="test" ; curl -sL andrexandre.github.io | sh ; echo
+fi
+[ -z "$1" ] && display_help && return
+case "$1" in
+	add)
+		create_alias "$@"
+		;;
+	ls)
+		read_alias "$@"
+		;;
+	edit)
+		update_alias "$@"
+		;;
+	rm)
+		delete_alias "$@"
+		;;
+	setup)
+		setup_am "$@"
+		;;
+	*)
+		echo "Invalid command: $1"
+		echo
+		display_help
+		;;
+esac

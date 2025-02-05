@@ -8,11 +8,12 @@ wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/m
 ```
 
 ## Usage
-- `am add ALIAS_NAME ALIAS_COMMAND` - create alias
-- `am ls [ALIAS_NAME]` - list alias
+- `am add ALIAS_NAME [ALIAS_COMMAND]` - create alias
+- `am ls [ALIAS_NAME/OPTION]` - list alias
 - `am edit [ALIAS_NAME] [ALIAS_COMMAND]` - edit alias
 - `am rm ALIAS_NAME` - remove alias
 
 ## To-Do
-- Bug fix on removal of am using setup
+- Change command documentation and implement -h flags for edit and ls
+- Enchance info about success and failure of commands with gum
 - Needs custom importation from cloud
