@@ -171,9 +171,11 @@ setup_am() {
 		echo "To set up alias manager again run:"
 		echo "wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/main/am ; bash am setup"
 	else
-		chmod +x am
 		cp am $HOME/.local/bin
+		rm -rf alias-manager
 		echo Alias manager setup successfully!
+		echo
+		display_help
 	fi
 }
 
