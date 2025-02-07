@@ -6,7 +6,7 @@ It executes functions based on the shell the script was executed
 ## Setup
 
 ```bash
-git clone https://github.com/andrexandre/alias-manager ; ./alias-manager/am setup
+git clone https://github.com/andrexandre/alias_manager ; ./alias_manager/am setup
 ```
 
 ## Usage

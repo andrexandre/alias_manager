@@ -169,10 +169,10 @@ setup_am() {
 		rm $HOME/.local/bin/am
 		echo "Alias manager removed successfully!"
 		echo "To set up alias manager again run:"
-		echo "git clone https://github.com/andrexandre/alias-manager ; ./alias-manager/am setup"
+		echo "git clone https://github.com/andrexandre/alias_manager ; ./alias_manager/am setup"
 	else
-		cp alias-manager/am $HOME/.local/bin
-		rm -rf alias-manager
+		cp alias_manager/am $HOME/.local/bin
+		rm -rf alias_manager
 		echo Alias manager setup successfully!
 		echo
 		display_help
