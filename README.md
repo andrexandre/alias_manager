@@ -4,7 +4,7 @@ This script allows you to do all CRUD (create, read, update, and delete) operati
 ## Setup
 
 ```bash
-git clone https://github.com/andrexandre/alias-manager ; bash alias-manager/am setup
+git clone https://github.com/andrexandre/alias-manager ; ./alias-manager/am setup
 ```
 
 ## Usage
