@@ -87,8 +87,8 @@ create_alias(){
 
 read_alias(){
 	if [ -z "$2" ]; then
-		# `am ls` only lists alias
 		alias | grep --color=no -Ff - $shrc
+		awk '/^[a-zA-Z_][a-zA-Z0-9_]*\s*\(\)\s*\{/{flag=1} flag; /\}/{flag=0}' $shrc
 		return
 	fi
 	if [ "$2" = "-a" ]; then
@@ -169,7 +169,7 @@ setup_am() {
 		rm $HOME/.local/bin/am
 		echo "Alias manager removed successfully!"
 		echo "To set up alias manager again run:"
-		echo "wget -q https://raw.githubusercontent.com/andrexandre/alias-manager/refs/heads/main/am ; bash am setup"
+		echo "git clone https://github.com/andrexandre/alias-manager ; ./alias-manager/am setup"
 	else
 		cp alias-manager/am $HOME/.local/bin
 		rm -rf alias-manager
