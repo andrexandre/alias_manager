@@ -38,6 +38,18 @@ update_styling_variables() {
 }
 update_styling_variables
 
+display_help() {
+echo "Usage: am COMMAND
+
+Alias and functions manager
+
+Commands:
+ add NAME [COMMAND]    Create alias
+ ls [NAME/OPTION]      List alias
+ edit [NAME] [COMMAND] Edit alias
+ rm NAME               Remove alias"
+}
+
 cmd_detection() {
 	result_text=$(type "$2" 2>&1)
 	case $result_text in
@@ -74,12 +86,14 @@ create_alias(){
 		echo function already exists:
 		which "$2"
 	elif [ "$result_type" = "not found" ]; then
+		alias_name=$2
 		if [ -z "$3" ]; then
 			alias_command=$(gum input --placeholder "Alias '$2' will execute...")
 			[ -z "$alias_command" ] && return
-			echo "alias $2='$alias_command'" >> $shrc
+			echo "alias $alias_name='$alias_command'" >> $shrc
 		else
-			echo "alias $2='$3'" >> $shrc
+			shift 2
+			echo "alias $alias_name='$@'" >> $shrc
 		fi
 		. $shrc
 	fi
@@ -115,7 +129,7 @@ read_alias(){
 update_alias(){
 	if [ -z "$2" ]; then
 		nano $shrc
-		. $shrc
+		echo -e "To update changes in this terminal, run:\n. $shrc"
 		return
 	fi
 	result_type=$(cmd_detection "$@")
@@ -194,18 +208,6 @@ update_am() {
 	else
 		echo setup alias manager first
 	fi 
-}
-
-display_help() {
-		echo "Usage: am COMMAND
-
-Alias and functions manager
-
-Commands:
- add NAME [COMMAND]    Create alias
- ls [NAME/OPTION]      List alias
- edit [NAME] [COMMAND] Edit alias
- rm NAME               Remove alias"
 }
 
 # main
