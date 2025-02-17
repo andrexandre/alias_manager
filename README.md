@@ -14,6 +14,8 @@ git clone https://github.com/andrexandre/alias_manager ; ./alias_manager/am setu
 - `am ls [ALIAS_NAME/OPTION]` - list alias
 - `am edit [ALIAS_NAME] [ALIAS_COMMAND]` - edit alias or .shellrc
 - `am rm ALIAS_NAME` - remove alias
+- `am update` - update alias manager
+- `am setup` - setup alias manager
 
 ## To-Do
 - Change command documentation and implement -h flags for edit and ls

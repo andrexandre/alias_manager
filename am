@@ -179,6 +179,23 @@ setup_am() {
 	fi
 }
 
+update_am() {
+	if [ -f $HOME/.local/bin/am ]; then
+		wget -q https://raw.githubusercontent.com/andrexandre/alias_manager/refs/heads/main/am
+		if diff am $HOME/.local/bin/am &> /dev/null; then
+			echo "Alias manager is already up to date"
+		else
+			echo "Updating alias manager..."
+			sleep 3
+			rm $HOME/.local/bin/am
+			chmod +x am
+			mv am $HOME/.local/bin
+		fi
+	else
+		echo setup alias manager first
+	fi 
+}
+
 display_help() {
 		echo "Usage: am COMMAND
 
@@ -214,6 +231,9 @@ case "$1" in
 		;;
 	setup)
 		setup_am "$@"
+		;;
+	update)
+		update_am "$@"
 		;;
 	*)
 		echo "Invalid command: $1"
