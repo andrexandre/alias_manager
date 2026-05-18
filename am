@@ -1,13 +1,15 @@
 #!/bin/bash
 
-script_shell_used=$(ps -cp "$$" -o command="")
-script_filename=$(basename $0)
-terminal_shell_used=$(ps -cp "$PPID" -o command="")
-# if the shell that the script is using is not the same as the one
-# terminal is using, run the script with the terminal's shell
-[ "$script_shell_used" != "$terminal_shell_used" ] && exec "$terminal_shell_used" "$0" "$@"
-
-shrc=$HOME/."$terminal_shell_used"rc
+if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
+	shrc=$HOME/.bashrc
+else
+    script_shell_used=$(ps -cp "$$" -o command="")
+    terminal_shell_used=$(ps -cp "$PPID" -o command="")
+    # if the shell that the script is using is not the same as the one
+    # terminal is using, run the script with the terminal's shell
+    [ "$script_shell_used" != "$terminal_shell_used" ] && exec "$terminal_shell_used" "$0" "$@"
+	shrc=$HOME/."$terminal_shell_used"rc
+fi
 [ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
 if ! echo "$PATH" | grep -q "$HOME/.local/bin" || \
 	! grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shrc; then
@@ -185,6 +187,10 @@ setup_am() {
 		echo "To set up alias manager again run:"
 		echo "git clone https://github.com/andrexandre/alias_manager ; ./alias_manager/am setup"
 	else
+		if [[ ! -d alias_manager || -d ../alias_manager ]]; then
+			echo "The setup should be run outside of the alias_manager directory"
+			return
+		fi
 		cp alias_manager/am $HOME/.local/bin
 		rm -rf alias_manager
 		echo Alias manager setup successfully!
@@ -195,7 +201,7 @@ setup_am() {
 
 update_am() {
 	if [ -f $HOME/.local/bin/am ]; then
-		wget -q https://raw.githubusercontent.com/andrexandre/alias_manager/refs/heads/main/am
+		curl -# -sLO https://raw.githubusercontent.com/andrexandre/alias_manager/refs/heads/main/am
 		if diff am $HOME/.local/bin/am &> /dev/null; then
 			echo "Alias manager is already up to date"
 		else
@@ -212,12 +218,12 @@ update_am() {
 
 # main
 if ! command -v gum &> /dev/null; then
-	if ! timeout 3 ping -c 1 google.com &> /dev/null; then
+	if ! curl -Is --max-time 3 google.com >/dev/null; then
 		echo "Bad internet connection" ; exit 1
 	fi
 	export list="test" ; curl -sL andrexandre.github.io | sh ; echo
 fi
-[ -z "$1" ] && display_help && return
+[ -z "$1" ] && display_help && exit
 case "$1" in
 	add)
 		create_alias "$@"
